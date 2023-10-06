@@ -1,14 +1,14 @@
-import React from 'react';
-import { connect } from 'react-redux';
+import React from 'react'
+import { connect } from 'react-redux'
 
-function Message(props) {
-  return <div id="message">{props.message}</div>;
+
+const Message = (props) => {
+  return <div id="message">{props.infoMessage}</div>
 }
 
 const mapStateToProps = (state) => {
   return {
-    message: state.infoMessage, // Assuming the message is stored in the infoMessage state
+    infoMessage: state.infoMessage
   };
-};
-
-export default connect(mapStateToProps)(Message);
+}
+export default connect(mapStateToProps)(Message)

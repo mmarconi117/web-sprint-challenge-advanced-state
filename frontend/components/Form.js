@@ -1,73 +1,43 @@
-import React, { useState } from 'react';
-import { connect } from 'react-redux';
-import { inputChange, resetForm, postQuiz } from '../state/action-creators';
+import React, { useEffect, useState } from 'react'
+import { connect } from 'react-redux'
+import * as actionCreators from '../state/action-creators'
 
 export function Form(props) {
-  const { form, inputChange, resetForm, postQuiz } = props;
-  const { newQuestion, newTrueAnswer, newFalseAnswer } = form;
 
-  const onChange = (evt) => {
-    const { id, value } = evt.target;
-    inputChange(id, value);
-  };
 
-  const onSubmit = (evt) => {
-    evt.preventDefault();
 
-    // Check if all fields have values
-    if (newQuestion.trim() && newTrueAnswer.trim() && newFalseAnswer.trim()) {
-      postQuiz({
-        question_text: newQuestion,
-        true_answer_text: newTrueAnswer,
-        false_answer_text: newFalseAnswer,
-      });
 
-      // Reset the form fields
-      resetForm();
-    } else {
-      // Handle the case where not all fields have values (show a message)
-    }
-  };
 
-  return (
-    <form id="form" onSubmit={onSubmit}>
-      <h2>Create New Quiz</h2>
-      <input
-        maxLength={50}
-        onChange={onChange}
-        id="newQuestion"
-        placeholder="Enter question"
-        value={newQuestion}
-      />
-      <input
-        maxLength={50}
-        onChange={onChange}
-        id="newTrueAnswer"
-        placeholder="Enter true answer"
-        value={newTrueAnswer}
-      />
-      <input
-        maxLength={50}
-        onChange={onChange}
-        id="newFalseAnswer"
-        placeholder="Enter false answer"
-        value={newFalseAnswer}
-      />
-      <button id="submitNewQuizBtn" type="submit">
-        Submit new quiz
-      </button>
-    </form>
-  );
+
+const onChange = evt => {
+  props.inputChange(evt.target.id, evt.target.value)
+  // console.log(disable)
 }
 
-const mapStateToProps = (state) => ({
-  form: state.form,
-});
 
-const mapDispatchToProps = {
-  inputChange,
-  resetForm,
-  postQuiz,
-};
+const onSubmit = (evt) => {
+  evt.preventDefault()
+  props.setQuiz(props.form)
+}
 
-export default connect(mapStateToProps, mapDispatchToProps)(Form);
+const setDisabled = () => {
+  if (props.form.newQuestion.trim().length > 1 && props.form.newTrueAnswer.trim().length > 1 && props.form.newFalseAnswer.trim().length > 1) {
+    return false;
+  } else {
+    return true;
+  }
+
+}
+
+return (
+  <form id="form" onSubmit={onSubmit}>
+    <h2>Create New Quiz</h2>
+    <input value={props.form.newQuestion} minLength={2} maxLength={50} onChange={(evt) => onChange(evt)} id="newQuestion" placeholder="Enter question" />
+    <input value={props.form.newTrueAnswer} minLength={2} maxLength={50} onChange={(evt) => onChange(evt)} id="newTrueAnswer" placeholder="Enter true answer" />
+    <input value={props.form.newFalseAnswer} minLength={2} maxLength={50} onChange={(evt) => onChange(evt)} id="newFalseAnswer" placeholder="Enter false answer" />
+    <button disabled={setDisabled()} onClick={(evt) => onSubmit(evt)} id="submitNewQuizBtn">Submit new quiz</button>
+  </form>
+)
+}
+
+export default connect(st => st, actionCreators)(Form)

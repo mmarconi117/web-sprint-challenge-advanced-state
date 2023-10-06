@@ -1,91 +1,66 @@
-// Action Creators for Synchronous Actions
-
 import axios from "axios";
+import { INPUT_CHANGE, MOVE_CLOCKWISE, MOVE_COUNTERCLOCKWISE, RESET_FORM, SET_INFO_MESSAGE, SET_QUIZ_INTO_STATE, SET_SELECTED_ANSWER } from "./action-types"
 
-export function moveClockwise(nextBCogIndex) {
-  return { type: 'MOVE_CLOCKWISE', payload: nextBCogIndex };
+
+
+export function moveClockwise() {
+  return ({ type: MOVE_CLOCKWISE });
 }
 
-export function moveCounterClockwise(previousBCogIndex) {
-  return { type: 'MOVE_COUNTER_CLOCKWISE', payload: previousBCogIndex };
+export function moveCounterClockwise() {
+
+  return ({ type: MOVE_COUNTERCLOCKWISE });
 }
 
 export function selectAnswer(answerId) {
-  return { type: 'SELECT_ANSWER', payload: answerId };
+  return ({ type: SET_SELECTED_ANSWER, payload: answerId });
 }
 
 export function setMessage(message) {
-  return { type: 'SET_MESSAGE', payload: message };
+  return ({ type: SET_INFO_MESSAGE, payload: message })
 }
 
-export function setQuiz(quizData) {
-  return { type: 'SET_QUIZ', payload: quizData };
+export function setQuiz(quiz) {
+  return function (dispatch) {
+    axios
+      .post('http://localhost:9000/api/quiz/new', { question_text: quiz.newQuestion, true_answer_text: quiz.newTrueAnswer, false_answer_text: quiz.newFalseAnswer })
+      .then(res => {
+        dispatch({ type: SET_INFO_MESSAGE, payload: `Congrats: "${quiz.newQuestion}" is a great question!` }) /**Reviewed with Chris. Added the message from test*/
+        dispatch(resetForm())
+      })
+  }
+
+
 }
 
-export function inputChange(field, value) {
-  return { type: 'INPUT_CHANGE', payload: { field, value } };
+export function inputChange(id, value) {
+  return ({ type: INPUT_CHANGE, payload: { id, value } })
 }
 
 export function resetForm() {
-  return { type: 'RESET_FORM' };
+  return ({ type: RESET_FORM })
 }
 
-// Async Action Creators
+
 export function fetchQuiz() {
+
   return function (dispatch) {
-    // First, dispatch an action to reset the quiz state
-    dispatch({ type: 'RESET_QUIZ' });
+    dispatch({ type: SET_QUIZ_INTO_STATE, payload: null });
     axios
       .get('http://localhost:9000/api/quiz/next')
-      .then(response => {
-        dispatch(setQuiz(response.data));
-      })
-      .catch(error => {
-        console.log(error);
-        dispatch({ type: 'ERROR', payload: error.message });
-        // Handle promise rejections by logging errors or dispatching an error action
-      });
-  };
-}
+      .then(res => dispatch({ type: SET_QUIZ_INTO_STATE, payload: res.data }))
 
-export function postAnswer(quizId, answerId) {
-  return function (dispatch) {
-    // Make an HTTP request to post the selected answer
-    axios
-      .post('http://localhost:9000/api/quiz/answer', { quiz_id: quizId, answer_id: answerId })
-      .then(response => {
-        // On successful POST:
-        // - Dispatch an action to reset the selected answer state
-        // - Dispatch an action to set the server message to state
-        // - Dispatch the fetching of the next quiz
-        dispatch(selectAnswer(null)); // Reset selected answer
-        dispatch(setMessage(response.data.message)); // Set server message
-        dispatch(fetchQuiz()); // Fetch the next quiz
-      })
-      .catch(error => {
-        console.log(error);
-        dispatch({ type: 'ERROR', payload: error.message });
-        // Handle promise rejections by logging errors or dispatching an error action
-      });
-  };
+  }
 }
-
-export function postQuiz(formData) {
+export function postAnswer(quiz_id, answer_id) {
   return function (dispatch) {
-    // Make an HTTP request to post a new quiz question
     axios
-      .post('http://localhost:9000/api/quiz/new', formData)
-      .then(response => {
-        // On successful POST:
-        // - Dispatch an action to set a success message to state
-        // - Dispatch the resetting of the form
-        dispatch(setMessage('Quiz question created successfully!'));
-        dispatch(resetForm());
+      .post('http://localhost:9000/api/quiz/answer', { quiz_id, answer_id })
+      .then(res => {
+        dispatch({ type: SET_SELECTED_ANSWER, payload: null })
+        dispatch({ type: SET_INFO_MESSAGE, payload: res.data.message })
+        fetchQuiz()(dispatch)
       })
-      .catch(error => {
-        console.log(error);
-        dispatch({ type: 'ERROR', payload: error.message });
-        // Handle promise rejections by logging errors or dispatching an error action
-      });
-  };
+
+  }
 }
